@@ -10,3 +10,93 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id          String   @id @default(cuid())
+  name        String?
+  email       String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // User preferences
+  dailyCalorieGoal Int @default(2000)
+  dailyWaterGoal   Int @default(2500) // in ml
+  targetWeight     Float?
+  currentWeight    Float?
+  
+  // Relations
+  foodEntries    FoodEntry[]
+  waterEntries   WaterEntry[]
+  weightEntries  WeightEntry[]
+}
+
+model Food {
+  id            String   @id @default(cuid())
+  name          String
+  brand         String?
+  barcode       String?  @unique
+  
+  // Nutrition per 100g
+  caloriesPer100g  Int
+  proteinPer100g   Float
+  carbsPer100g     Float
+  fatPer100g       Float
+  fiberPer100g     Float?
+  sugarPer100g     Float?
+  sodiumPer100g    Float?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  foodEntries   FoodEntry[]
+}
+
+model FoodEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  foodId    String
+  
+  // Serving details
+  servingSize  Float    // in grams
+  mealType     String   // breakfast, lunch, dinner, snacks
+  
+  // Calculated nutrition (based on serving size)
+  calories     Int
+  protein      Float
+  carbs        Float
+  fat          Float
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  food         Food     @relation(fields: [foodId], references: [id])
+  
+  @@index([userId, createdAt])
+}
+
+model WaterEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int      // in ml
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+}
+
+model WeightEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  weight    Float    // in kg
+  createdAt DateTime @default(now())
+  
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+}

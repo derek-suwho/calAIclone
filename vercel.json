@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd calai-clone && npm run build",
+  "devCommand": "cd calai-clone && npm run dev",
+  "installCommand": "cd calai-clone && npm install",
+  "outputDirectory": "calai-clone/.next"
+}

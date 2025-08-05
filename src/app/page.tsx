@@ -1,21 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Camera, Plus, Search, User, BarChart3, Droplets, Scale } from 'lucide-react'
-import FoodSearchModal from '@/components/FoodSearchModal'
-import FoodScanModal from '@/components/FoodScanModal'
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('diary')
-  const [showFoodSearch, setShowFoodSearch] = useState(false)
-  const [showFoodScan, setShowFoodScan] = useState(false)
-  const [selectedMeal, setSelectedMeal] = useState('breakfast')
-  
-  // User and data state
-  const [userId] = useState('demo-user') // In a real app, this would come from auth
-  const [diaryData, setDiaryData] = useState<any>(null)
-  const [waterData, setWaterData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
   
   const today = new Date().toLocaleDateString('en-US', { 
     weekday: 'long', 
@@ -23,81 +12,6 @@ export default function Dashboard() {
     month: 'long', 
     day: 'numeric' 
   })
-
-  // Load data on component mount
-  useEffect(() => {
-    loadDiaryData()
-    loadWaterData()
-  }, [])
-
-  const loadDiaryData = async () => {
-    try {
-      const response = await fetch(`/api/diary?userId=${userId}`)
-      const data = await response.json()
-      setDiaryData(data)
-    } catch (error) {
-      console.error('Failed to load diary data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadWaterData = async () => {
-    try {
-      const response = await fetch(`/api/water?userId=${userId}`)
-      const data = await response.json()
-      setWaterData(data)
-    } catch (error) {
-      console.error('Failed to load water data:', error)
-    }
-  }
-
-  const handleAddFood = async (food: any, servingSize: number, mealType: string) => {
-    try {
-      const response = await fetch('/api/food/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId,
-          foodData: food,
-          servingSize,
-          mealType
-        })
-      })
-      
-      if (response.ok) {
-        await loadDiaryData() // Refresh data
-      }
-    } catch (error) {
-      console.error('Failed to add food:', error)
-    }
-  }
-
-  const handleAddWater = async () => {
-    try {
-      const response = await fetch('/api/water', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, amount: 250 })
-      })
-      
-      if (response.ok) {
-        await loadWaterData() // Refresh data
-      }
-    } catch (error) {
-      console.error('Failed to add water:', error)
-    }
-  }
-
-  const openFoodSearch = (mealType: string) => {
-    setSelectedMeal(mealType)
-    setShowFoodSearch(true)
-  }
-
-  const openFoodScan = () => {
-    setSelectedMeal('breakfast') // Default to breakfast
-    setShowFoodScan(true)
-  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -121,13 +35,9 @@ export default function Dashboard() {
       <div className="mx-4 mb-6">
         <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800">
           <div className="text-center mb-4">
-            <div className="text-4xl font-bold text-green-400 mb-2">
-              {diaryData?.totals?.calories || 0}
-            </div>
+            <div className="text-4xl font-bold text-green-400 mb-2">1,247</div>
             <div className="text-gray-400 text-sm">Calories consumed</div>
-            <div className="text-gray-500 text-xs">
-              {diaryData?.remaining || 0} remaining
-            </div>
+            <div className="text-gray-500 text-xs">553 remaining</div>
           </div>
           
           {/* Progress Ring */}
@@ -150,14 +60,12 @@ export default function Dashboard() {
                   strokeWidth="8"
                   fill="none"
                   strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (1 - (diaryData?.totals?.calories || 0) / (diaryData?.goal || 2000))}`}
+                  strokeDashoffset={`${2 * Math.PI * 50 * (1 - 0.69)}`}
                   className="transition-all duration-500"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold">
-                  {Math.round(((diaryData?.totals?.calories || 0) / (diaryData?.goal || 2000)) * 100)}%
-                </span>
+                <span className="text-2xl font-bold">69%</span>
               </div>
             </div>
           </div>
@@ -165,21 +73,15 @@ export default function Dashboard() {
           {/* Macros */}
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-lg font-semibold text-blue-400">
-                {diaryData?.totals?.protein?.toFixed(1) || 0}g
-              </div>
+              <div className="text-lg font-semibold text-blue-400">89g</div>
               <div className="text-xs text-gray-400">Protein</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-yellow-400">
-                {diaryData?.totals?.carbs?.toFixed(1) || 0}g
-              </div>
+              <div className="text-lg font-semibold text-yellow-400">156g</div>
               <div className="text-xs text-gray-400">Carbs</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-red-400">
-                {diaryData?.totals?.fat?.toFixed(1) || 0}g
-              </div>
+              <div className="text-lg font-semibold text-red-400">52g</div>
               <div className="text-xs text-gray-400">Fat</div>
             </div>
           </div>
@@ -189,20 +91,14 @@ export default function Dashboard() {
       {/* Quick Actions */}
       <div className="px-4 mb-6">
         <div className="grid grid-cols-2 gap-3">
-          <button 
-            onClick={openFoodScan}
-            className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 flex items-center space-x-3 shadow-lg hover:from-green-600 hover:to-green-700 transition-colors"
-          >
+          <button className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 flex items-center space-x-3 shadow-lg">
             <Camera className="w-6 h-6" />
             <div className="text-left">
               <div className="font-semibold">Scan Food</div>
               <div className="text-xs opacity-80">Take a photo</div>
             </div>
           </button>
-          <button 
-            onClick={() => openFoodSearch('breakfast')}
-            className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3 hover:bg-gray-700 transition-colors"
-          >
+          <button className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center space-x-3">
             <Search className="w-6 h-6" />
             <div className="text-left">
               <div className="font-semibold">Search</div>
@@ -240,42 +136,29 @@ export default function Dashboard() {
               <div key={meal} className="bg-gray-900 rounded-xl p-4 border border-gray-800">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold">{meal}</h3>
-                  <button 
-                    onClick={() => openFoodSearch(meal.toLowerCase())}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
+                  <Plus className="w-5 h-5 text-gray-400" />
                 </div>
-                {(() => {
-                  const mealKey = meal.toLowerCase()
-                  const mealEntries = diaryData?.meals?.[mealKey] || []
-                  const mealCalories = mealEntries.reduce((sum: number, entry: any) => sum + entry.calories, 0)
-                  
-                  return (
-                    <>
-                      <div className="text-sm text-gray-400">
-                        {mealEntries.length > 0 
-                          ? `${mealEntries.length} items • ${mealCalories} cal`
-                          : 'Add food'
-                        }
+                <div className="text-sm text-gray-400">
+                  {meal === 'Breakfast' ? '2 items • 420 cal' : 'Add food'}
+                </div>
+                {meal === 'Breakfast' && (
+                  <div className="mt-3 space-y-2">
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <div className="font-medium">Oatmeal with berries</div>
+                        <div className="text-xs text-gray-400">1 bowl</div>
                       </div>
-                      {mealEntries.length > 0 && (
-                        <div className="mt-3 space-y-2">
-                          {mealEntries.map((entry: any) => (
-                            <div key={entry.id} className="flex justify-between items-center py-2">
-                              <div>
-                                <div className="font-medium">{entry.food.name}</div>
-                                <div className="text-xs text-gray-400">{entry.servingSize}g</div>
-                              </div>
-                              <div className="text-sm">{entry.calories} cal</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
+                      <div className="text-sm">280 cal</div>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <div>
+                        <div className="font-medium">Greek yogurt</div>
+                        <div className="text-xs text-gray-400">1 cup</div>
+                      </div>
+                      <div className="text-sm">140 cal</div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -313,31 +196,24 @@ export default function Dashboard() {
                 <h3 className="font-semibold">Water Intake</h3>
               </div>
               <div className="text-center mb-4">
-                <div className="text-3xl font-bold text-blue-400 mb-1">
-                  {((waterData?.totalWater || 0) / 1000).toFixed(1)}L
-                </div>
-                <div className="text-sm text-gray-400">
-                  of {((waterData?.dailyGoal || 2500) / 1000).toFixed(1)}L goal
-                </div>
+                <div className="text-3xl font-bold text-blue-400 mb-1">1.2L</div>
+                <div className="text-sm text-gray-400">of 2.5L goal</div>
               </div>
               <div className="grid grid-cols-4 gap-2 mb-4">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((glass) => (
                   <div
                     key={glass}
                     className={`aspect-square rounded-lg border-2 flex items-center justify-center ${
-                      glass <= (waterData?.glassesConsumed || 0)
+                      glass <= 3
                         ? 'bg-blue-400 border-blue-400'
                         : 'border-gray-700'
                     }`}
                   >
-                    <Droplets className={`w-4 h-4 ${glass <= (waterData?.glassesConsumed || 0) ? 'text-white' : 'text-gray-700'}`} />
+                    <Droplets className={`w-4 h-4 ${glass <= 3 ? 'text-white' : 'text-gray-700'}`} />
                   </div>
                 ))}
               </div>
-              <button 
-                onClick={handleAddWater}
-                className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg py-3 font-medium transition-colors"
-              >
+              <button className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg py-3 font-medium transition-colors">
                 Add Glass
               </button>
             </div>
@@ -347,21 +223,6 @@ export default function Dashboard() {
 
       {/* Bottom spacing */}
       <div className="h-20"></div>
-      
-      {/* Modals */}
-      <FoodSearchModal 
-        isOpen={showFoodSearch}
-        onClose={() => setShowFoodSearch(false)}
-        onAddFood={handleAddFood}
-        mealType={selectedMeal}
-      />
-      
-      <FoodScanModal 
-        isOpen={showFoodScan}
-        onClose={() => setShowFoodScan(false)}
-        onAddFood={handleAddFood}
-        mealType={selectedMeal}
-      />
     </div>
   )
 }

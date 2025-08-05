@@ -1,0 +1,122 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(cuid())
+  email             String   @unique
+  name              String?
+  image             String?
+  age               Int?
+  height            Float?   // in cm
+  weight            Float?   // in kg
+  gender            String?
+  activityLevel     String?  // sedentary, lightly_active, moderately_active, very_active, extremely_active
+  goal              String?  // lose_weight, maintain_weight, gain_weight, gain_muscle
+  targetCalories    Int?
+  targetProtein     Float?
+  targetCarbs       Float?
+  targetFat         Float?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  meals             Meal[]
+  waterEntries      WaterEntry[]
+  weightEntries     WeightEntry[]
+  favoriteFood      FavoriteFood[]
+}
+
+model Food {
+  id                String   @id @default(cuid())
+  name              String
+  brand             String?
+  barcode           String?  @unique
+  caloriesPer100g   Float
+  proteinPer100g    Float
+  carbsPer100g      Float
+  fatPer100g        Float
+  fiberPer100g      Float?
+  sugarPer100g      Float?
+  sodiumPer100g     Float?
+  isVerified        Boolean  @default(false)
+  source            String?  // "usda", "user_generated", "ai_generated"
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  mealFoods         MealFood[]
+  favoriteFood      FavoriteFood[]
+}
+
+model Meal {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String   // breakfast, lunch, dinner, snack
+  date              DateTime
+  totalCalories     Float    @default(0)
+  totalProtein      Float    @default(0)
+  totalCarbs        Float    @default(0)
+  totalFat          Float    @default(0)
+  photoUrl          String?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foods             MealFood[]
+}
+
+model MealFood {
+  id                String   @id @default(cuid())
+  mealId            String
+  foodId            String
+  quantity          Float    // in grams
+  calories          Float
+  protein           Float
+  carbs             Float
+  fat               Float
+  createdAt         DateTime @default(now())
+  
+  meal              Meal     @relation(fields: [mealId], references: [id], onDelete: Cascade)
+  food              Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+}
+
+model WaterEntry {
+  id                String   @id @default(cuid())
+  userId            String
+  amount            Float    // in ml
+  date              DateTime
+  createdAt         DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WeightEntry {
+  id                String   @id @default(cuid())
+  userId            String
+  weight            Float    // in kg
+  date              DateTime
+  createdAt         DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FavoriteFood {
+  id                String   @id @default(cuid())
+  userId            String
+  foodId            String
+  createdAt         DateTime @default(now())
+  
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  food              Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, foodId])
+}
